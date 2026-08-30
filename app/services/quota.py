@@ -1,9 +1,9 @@
-﻿from sqlalchemy import func
+from sqlalchemy import func
 from app.models import UsageEvent, Subscription
 
 
 def get_active_plan(db, tenant_id):
-    sub = db.query(Subscription).filter_by(tenant_id=tenant_id, status="active").first()
+    sub = db.query(Subscription).filter_by(tenant_id=tenant_id).first()
     return sub.plan if sub else None
 
 

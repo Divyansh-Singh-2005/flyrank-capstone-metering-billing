@@ -21,6 +21,7 @@ class Subscription(Base):
     id = Column(Integer, primary_key=True)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
     plan_id = Column(Integer, ForeignKey("plans.id"), nullable=False)
+    stripe_customer_id = Column(String, nullable=True)
     stripe_subscription_id = Column(String, nullable=True)
     status = Column(String, default="active")
     tenant = relationship("Tenant")
@@ -38,3 +39,10 @@ class UsageEvent(Base):
     __table_args__ = (
         UniqueConstraint("tenant_id", "idempotency_key", name="uq_tenant_idempotency"),
     )
+
+class WebhookEvent(Base):
+    __tablename__ = "webhook_events"
+    id = Column(Integer, primary_key=True)
+    stripe_event_id = Column(String, unique=True, nullable=False)
+    event_type = Column(String, nullable=False)
+    processed_at = Column(DateTime, default=datetime.utcnow)
