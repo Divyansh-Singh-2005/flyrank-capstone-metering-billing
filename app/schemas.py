@@ -22,6 +22,7 @@ class UsageSummary(BaseModel):
     usage_type: str
     used: int
     limit: int
+    cost_dollars: str
 
 
 class UsageResponse(BaseModel):

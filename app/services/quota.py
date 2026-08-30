@@ -1,5 +1,6 @@
-from sqlalchemy import func
+﻿from sqlalchemy import func
 from app.models import UsageEvent, Subscription
+from app.services.pricing import calculate_token_cost, calculate_api_call_cost
 
 
 def get_active_plan(db, tenant_id):
@@ -16,13 +17,26 @@ def get_current_usage(db, tenant_id, usage_type):
     return total or 0
 
 
+def get_usage_cost_dollars(db, tenant_id, usage_type):
+    used = get_current_usage(db, tenant_id, usage_type)
+    if usage_type == "api_call":
+        return calculate_api_call_cost(used)["total_dollars"]
+    # Simplification for this capstone's scope: usage_type "tokens" is
+    # metered as one combined quantity (Section 7 keeps it to 2 usage
+    # types), so the whole total is billed at the plain output rate.
+    # A finer-grained system would record each token category as its
+    # own usage_type to price them individually via calculate_token_cost.
+    return calculate_token_cost(output_tokens=used)["total_dollars"]
+
+
 def get_usage_summary(db, tenant_id, usage_type):
     plan = get_active_plan(db, tenant_id)
     if plan is None:
-        return {"used": 0, "limit": 0}
+        return {"used": 0, "limit": 0, "cost_dollars": "$0.000000"}
     limit = plan.api_call_limit if usage_type == "api_call" else plan.token_limit
     used = get_current_usage(db, tenant_id, usage_type)
-    return {"used": used, "limit": limit}
+    cost_dollars = get_usage_cost_dollars(db, tenant_id, usage_type)
+    return {"used": used, "limit": limit, "cost_dollars": cost_dollars}
 
 
 def check_quota(db, tenant_id, usage_type, requested_quantity):

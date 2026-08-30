@@ -10,9 +10,6 @@ router = APIRouter()
 
 @router.post("/generate", response_model=GenerateResponse)
 def generate(payload: GenerateRequest, db: Session = Depends(get_db)):
-    # Idempotency check runs BEFORE quota check. A retry of an
-    # already-succeeded request must return the original result, not be
-    # re-evaluated against current usage (which may have since changed).
     existing = get_existing_event(db, payload.tenant_id, payload.idempotency_key)
     if existing:
         summary = get_usage_summary(db, payload.tenant_id, existing.usage_type)
@@ -57,7 +54,7 @@ def get_usage(tenant_id: int, db: Session = Depends(get_db)):
         tenant_id=tenant_id,
         plan=plan.name,
         usage=[
-            UsageSummary(usage_type="api_call", used=api_summary["used"], limit=api_summary["limit"]),
-            UsageSummary(usage_type="tokens", used=token_summary["used"], limit=token_summary["limit"]),
+            UsageSummary(usage_type="api_call", used=api_summary["used"], limit=api_summary["limit"], cost_dollars=api_summary["cost_dollars"]),
+            UsageSummary(usage_type="tokens", used=token_summary["used"], limit=token_summary["limit"], cost_dollars=token_summary["cost_dollars"]),
         ],
     )
